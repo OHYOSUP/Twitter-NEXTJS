@@ -1,10 +1,37 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const { User } = require("../models");
+const { User, Post } = require("../models");
 const router = express.Router();
 const passport = require("passport");
+const { isLoggedIn, isNotLoggedIn } = require("./middlewares");
 
-router.post("/login", (req, res, next) => {
+router.get("/", async (req, res, next) => {
+  try {
+    if (req.user) {
+      const userWithoutPassword = await User.findOne({
+        where: {
+          id: req.user.id,
+        },
+        attributes: {
+          exclude: ["password"],
+        },
+        include: [
+          { model: Post, attributes: ["id"] },
+          { model: User, as: "Followings", attributes: ["id"] },
+          { model: User, as: "Followers", attributes: ["id"] },
+        ],
+      });
+      res.status(200).json(userWithoutPassword);
+    } else {
+      res.status(200).json(null);
+    }
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.post("/login", isNotLoggedIn, (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
     if (err) {
       console.error(err);
@@ -18,12 +45,25 @@ router.post("/login", (req, res, next) => {
         console.error(loginerr);
         return next(loginerr);
       }
-      return res.status(200).json(user);
+      const userWithoutPassword = await User.findOne({
+        where: {
+          id: user.id,
+        },
+        attributes: {
+          exclude: ["password"],
+        },
+        include: [
+          { model: Post, attributes: ["id"] },
+          { model: User, as: "Followings", attributes: ["id"] },
+          { model: User, as: "Followers", attributes: ["id"] },
+        ],
+      });
+      return res.status(200).json(userWithoutPassword);
     });
   })(req, res, next);
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", isNotLoggedIn, async (req, res, next) => {
   // POST /user/
   try {
     const exUser = await User.findOne({
@@ -46,9 +86,12 @@ router.post("/", async (req, res, next) => {
     next(error); // status 500
   }
 });
-router.post("/user/logout", (req, res, next) => {
-  req.logout();
+router.post("/logout", isLoggedIn, (req, res) => {
+  req.logout(() => {
+    res.redirect("/");
+  });
   req.session.destroy();
   res.send("ok");
 });
+
 module.exports = router;

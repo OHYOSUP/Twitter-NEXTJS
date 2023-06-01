@@ -29,12 +29,12 @@ module.exports = (sequelize, DataTypes) => {
     db.User.belongsToMany(db.Post, { through: "Like", as: "Liked" }); // 다대다 관계 as -> 별칭
     db.User.belongsToMany(db.User, {
       through: "Follow",
-      as: "Follwers",
+      as: "Followers",
       foreignKey: "FollowingId",
     });
     db.User.belongsToMany(db.User, {
       through: "Follow",
-      as: "Follwings",
+      as: "Followings",
       foreignKey: "FollowerId",
     });
   };

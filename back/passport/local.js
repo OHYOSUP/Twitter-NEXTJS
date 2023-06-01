@@ -16,7 +16,7 @@ module.exports = () => {
               email,
             },
           });
-          if (!User) {
+          if (!user) {
             return done(null, false, { reason: "존재하지 않는 이메일입니다" });
           }
           // bcrypt.compare = 비밀번호 비교
