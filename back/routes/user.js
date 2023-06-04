@@ -6,6 +6,82 @@ const passport = require("passport");
 const { isLoggedIn, isNotLoggedIn } = require("./middlewares");
 
 router.get("/", async (req, res, next) => {
+  // console.log(req.headers)
+  try {
+    if (req.user) {
+      const userWithoutPassword = await User.findOne({
+        where: { id: req.user.id },
+        attributes: {
+          exclude: ["password"],
+        },
+        include: [
+          {
+            model: Post,
+            attributes: ["id"],
+          },
+          {
+            model: User,
+            as: "Followings",
+            attributes: ["id"],
+          },
+          {
+            model: User,
+            as: "Followers",
+            attributes: ["id"],
+          },
+        ],
+      });
+      res.status(200).json(userWithoutPassword);
+    } else {
+      res.status(200).json(null);
+    }
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.get("/:userId", async (req, res, next) => {
+  try {
+    const userWithoutPassword = await User.findOne({
+      where: { id: req.params.id },
+      attributes: {
+        exclude: ["password"],
+      },
+      include: [
+        {
+          model: Post,
+          attributes: ["id"],
+        },
+        {
+          model: User,
+          as: "Followings",
+          attributes: ["id"],
+        },
+        {
+          model: User,
+          as: "Followers",
+          attributes: ["id"],
+        },
+      ],
+    });
+    if (!userWithoutPassword) {
+      const data = userWithoutPassword.toJSON();
+      data.Posts = data.Posts.length;
+      data.Followers = data.Follwers.length;
+      data.Followings = data.Follwings.length;
+      res.status(404).send(`존재하지 않는 사용자입니다.`);
+    } else {
+      res.status(200).json(userWithoutPassword);
+    }
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.get("/", async (req, res, next) => {
+  // console.log(req.headers)
   try {
     if (req.user) {
       const userWithoutPassword = await User.findOne({
