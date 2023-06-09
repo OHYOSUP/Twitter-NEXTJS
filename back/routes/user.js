@@ -1,9 +1,10 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const { User, Post } = require("../models");
+const { User, Post, Image, Comment } = require("../models");
 const router = express.Router();
 const passport = require("passport");
 const { isLoggedIn, isNotLoggedIn } = require("./middlewares");
+const { Op } = require('sequelize');
 
 router.get("/", async (req, res, next) => {
   // console.log(req.headers)
@@ -35,6 +36,31 @@ router.get("/", async (req, res, next) => {
     } else {
       res.status(200).json(null);
     }
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+});
+router.get("/followers", isLoggedIn, async (req, res, next) => {
+  try {
+    const user = await User.findOne({ where: { id: req.user.id } });
+    const followers = await user.getFollowers({
+      limit: parseInt(req.query.limit, 10),
+    });
+    res.status(200).json(followers);
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.get("/followings", isLoggedIn, async (req, res, next) => {
+  try {
+    const user = await User.findOne({ where: { id: req.user.id } });
+    const followings = await user.getFollowings({
+      limit: parseInt(req.query.limit, 10)
+    });
+    res.status(200).json(followings);
   } catch (err) {
     console.error(err);
     next(err);
@@ -80,44 +106,62 @@ router.get("/:userId", async (req, res, next) => {
   }
 });
 
-router.get("/", async (req, res, next) => {
-  // console.log(req.headers)
+router.get("/:userId/posts", async (req, res, next) => {
   try {
-    if (req.user) {
-      const userWithoutPassword = await User.findOne({
-        where: { id: req.user.id },
-        attributes: {
-          exclude: ["password"],
-        },
-        include: [
-          {
-            model: Post,
-            attributes: ["id"],
-          },
-          {
-            model: User,
-            as: "Followings",
-            attributes: ["id"],
-          },
-          {
-            model: User,
-            as: "Followers",
-            attributes: ["id"],
-          },
-        ],
-      });
-      res.status(200).json(userWithoutPassword);
-    } else {
-      res.status(200).json(null);
+    const where = { UserId: req.params.userId };
+    if (parseInt(req.query.lastId, 10)) {
+      // 초기 로딩이 아닐 때
+      where.id = { [Op.lt]: parseInt(req.query.lastId, 10) };
     }
+    const posts = await Post.findAll({
+      where,
+      limit: 10,
+      order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: User,
+          attributes: ["id", "nickname"],
+        },
+        {
+          model: Image,
+        },
+        {
+          model: Comment,
+          include: [
+            {
+              model: User,
+              attributes: ["id", "nickname"],
+            },
+          ],
+        },
+        {
+          model: User,
+          as: "Likers",
+          attributes: ["id"],
+        },
+        {
+          model: Post,
+          as: "Retweet",
+          include: [
+            {
+              model: User,
+              attributes: ["id", "nickname"],
+            },
+            {
+              model: Image,
+            },
+          ],
+        },
+      ],
+    });
+    res.status(200).json(posts);
   } catch (err) {
     console.error(err);
     next(err);
   }
 });
-
-router.post("/login", isNotLoggedIn, (req, res, next) => {
-  passport.authenticate("local", (err, user, info) => {
+router.post('/login', isNotLoggedIn, (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
     if (err) {
       console.error(err);
       return next(err);
@@ -125,34 +169,30 @@ router.post("/login", isNotLoggedIn, (req, res, next) => {
     if (info) {
       return res.status(401).send(info.reason);
     }
-    return req.login(user, async (loginerr) => {
-      if (loginerr) {
-        console.error(loginerr);
-        return next(loginerr);
+    return req.login(user, async (loginErr) => {
+      if (loginErr) {
+        console.error(loginErr);
+        return next(loginErr);
       }
-      const userWithoutPassword = await User.findOne({
+      const fullUserWithoutPassword = await User.findOne({
         where: { id: user.id },
         attributes: {
-          exclude: ["password"],
+          exclude: ['password']
         },
-        include: [
-          {
-            model: Post,
-            attributes: ["id"],
-          },
-          {
-            model: User,
-            as: "Followings",
-            attributes: ["id"],
-          },
-          {
-            model: User,
-            as: "Followers",
-            attributes: ["id"],
-          },
-        ],
-      });
-      return res.status(200).json(userWithoutPassword);
+        include: [{
+          model: Post,
+          attributes: ['id'],
+        }, {
+          model: User,
+          as: 'Followings',
+          attributes: ['id'],
+        }, {
+          model: User,
+          as: 'Followers',
+          attributes: ['id'],
+        }]
+      })
+      return res.status(200).json(fullUserWithoutPassword);
     });
   })(req, res, next);
 });
@@ -233,28 +273,6 @@ router.delete("/:userId/follow", isLoggedIn, async (req, res, next) => {
   }
 });
 
-router.get("/followers", isLoggedIn, async (req, res, next) => {
-  try {
-    const user = await User.findOne({ where: { id: req.user.id } });
-    const followers = await user.getFollowers();
-    res.status(200).json(followers);
-  } catch (err) {
-    console.error(err);
-    next(err);
-  }
-});
-
-router.get("/followings", isLoggedIn, async (req, res, next) => {
-  try {
-    const user = await User.findOne({ where: { id: req.user.id } });
-    const followings = await user.getFollowings();
-    res.status(200).json(followings);
-  } catch (err) {
-    console.error(err);
-    next(err);
-  }
-});
-
 router.delete("/follower/:userId", isLoggedIn, async (req, res, next) => {
   try {
     const user = await User.findOne({ where: { id: req.params.userId } });
@@ -268,5 +286,10 @@ router.delete("/follower/:userId", isLoggedIn, async (req, res, next) => {
     next(err);
   }
 });
+
+
+
+
+
 
 module.exports = router;
