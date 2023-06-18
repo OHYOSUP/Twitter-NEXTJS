@@ -12,7 +12,9 @@ const postsRouter = require("./routes/posts");
 const userRouter = require("./routes/user");
 const db = require("./models");
 const passportConfig = require("./passport");
-
+const hpp = require('hpp')
+const helmet = require('helmet')
+ 
 dotenv.config();
 const app = express();
 db.sequelize
@@ -23,13 +25,20 @@ db.sequelize
   .catch(console.error);
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", `nodebird.com`],
     credentials: true,
   })
 );
 
 passportConfig();
 // dirname join으로 경로 합쳐주기
+if(process.env.NODE_ENV === 'production'){
+  app.use(morgan('combined'))
+  app.use(hpp())
+  app.use(helmet());
+}else{
+  app.use(morgan('dev'))
+}
 app.use("/", express.static(path.join(__dirname, "uploads")));
 app.use(morgan("dev"));
 // front에서 받을 데이터의 형식
