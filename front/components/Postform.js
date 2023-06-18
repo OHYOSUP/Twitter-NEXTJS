@@ -8,6 +8,7 @@ import {
 } from "../reducers/post";
 import useInput from "../hooks/useInput";
 import styled from "styled-components";
+import { backUrl } from "../config/config";
 
 const PostForm = () => {
   const [twittText, onChangeText, setTwittText] = useInput("");
@@ -92,7 +93,7 @@ const PostForm = () => {
         {imagePaths.map((v, i) => (
           <div key={v} style={{ display: "inline-block" }}>
             <img
-              src={`http://localhost:3065/${v}`}
+              src={`${backUrl}/${v}`}
               style={{ width: "200px" }}
               alt={v}
             />

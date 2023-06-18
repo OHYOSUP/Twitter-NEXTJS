@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { PlusOutlined } from "@ant-design/icons";
 import styled from "styled-components";
 import ImagesZoom from "./ImagesZom";
+import { backUrl } from "../config/config";
 
 const PostImages = ({ images }) => {
   const [showImagesZoom, setShowImagesZoom] = useState(false);
@@ -19,7 +20,7 @@ const PostImages = ({ images }) => {
   if (images.length === 1) {
     return (
       <>
-        <PostImageWrapperHalf src={`http://localhost:3065/${images[0].src}`} onClick={onZoom} />
+        <PostImageWrapperHalf src={`${backUrl}/${images[0].src}`} onClick={onZoom} />
         {showImagesZoom && <ImagesZoom images={images} onClose={onClose} />}
       </>
     );
@@ -28,8 +29,8 @@ const PostImages = ({ images }) => {
     return (
       <>
         <div>
-          <img style={{ width: "50%", display:'flex', justifyContent:'center',alignItems:'center'}} src={`http://localhost:3065/${images[0].src}`}  onClick={onZoom} />
-          <img style={{ width: "50%", display:'flex', justifyContent:'center',alignItems:'center'}} src={`http://localhost:3065/${images[1].src}`}  onClick={onZoom} />
+          <img style={{ width: "50%", display:'flex', justifyContent:'center',alignItems:'center'}} src={`${backUrl}/${images[0].src}`}  onClick={onZoom} />
+          <img style={{ width: "50%", display:'flex', justifyContent:'center',alignItems:'center'}} src={`${backUrl}/${images[1].src}`}  onClick={onZoom} />
         </div>
         {showImagesZoom && <ImagesZoom images={images} onClose={onClose} />}
       </>
