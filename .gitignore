@@ -1,3 +1,5 @@
 node_modules/
 .env
 .next
+react-nodebird.pem
+react-nodebird-aws.pem
