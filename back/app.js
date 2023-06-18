@@ -25,7 +25,7 @@ db.sequelize
   .catch(console.error);
 app.use(
   cors({
-    origin: ["http://localhost:3000", `nodebird.com`],
+    origin: ["http://localhost:3000", `nodebird.com`, 'http://15.164.103.14'],
     credentials: true,
   })
 );
