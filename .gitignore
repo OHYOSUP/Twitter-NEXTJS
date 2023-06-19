@@ -3,4 +3,3 @@ node_modules/
 .next
 react-nodebird.pem
 react-nodebird-aws.pem
-.env
