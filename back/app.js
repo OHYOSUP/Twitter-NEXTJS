@@ -25,7 +25,7 @@ db.sequelize
   .catch(console.error);
 app.use(
   cors({
-    origin: ["http://localhost:3000", `nodebird.com`, 'http://13.125.192.106'],
+    origin: ["http://localhost:3000", `react-twittie.com`],
     credentials: true,
   })
 );
@@ -50,6 +50,11 @@ app.use(
     saveUninitialized: false,
     resave: false,
     secret: process.env.COOKIE_SECRET,
+    cookie:{
+      httpOnly:true,
+      secure: false,
+      domain: process.env.NODE_ENV === 'production' && '.react-twittie.com'
+    }
   })
 );
 app.use(passport.initialize());

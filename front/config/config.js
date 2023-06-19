@@ -1,1 +1,1 @@
-export const backUrl = 'http://15.164.216.70'
+export const backUrl = 'http://react-twittie.com'
